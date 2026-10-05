@@ -55,6 +55,25 @@ typedef size_t      usize;
 
 #define S(s) (s8){(u8 *)(s), lengthof(s)}
 
+// the builtins used here that cl.exe lacks; clang-cl has them
+#if defined(_MSC_VER) && !defined(__clang__)
+unsigned char _BitScanReverse64(unsigned long *, unsigned __int64);
+#pragma intrinsic(_BitScanReverse64)
+// as clang's, so undefined for 0
+static i32 msvcclzll(u64 v) {
+  unsigned long i;
+  _BitScanReverse64(&i, v);
+  return 63 - (i32)i;
+}
+static usize msvcstrlen(char *s) {
+  usize n = 0;
+  while (s[n]) n++;
+  return n;
+}
+#define __builtin_clzll(v)  msvcclzll(v)
+#define __builtin_strlen(s) msvcstrlen(s)
+#endif
+
 #define MAX(x, y) ( ((x) > (y)) ? (x) : (y) )
 #define MIN(x, y) ( ((x) < (y)) ? (x) : (y) )
 
