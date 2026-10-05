@@ -1,0 +1,423 @@
+(add 1 2)
+%%%
+(dec 5)
+%%%
+(sub 5 'a')
+%%%
+(turn ~[1 2 3] |=(a=@ +(a)))
+%%%
+(turn ~[1 2 3] |=(a=@t a))
+%%%
+(turn ~[1 2 3] |=(a=^ a))
+%%%
+(roll ~[1 2 3] add)
+%%%
+(roll `(list @)`~[1 2 3] |=([a=@ b=@] (add a b)))
+%%%
+(reel ~[1 2 3] |=([a=@ b=@] (add a b)))
+%%%
+(skim ~[1 2 3] |=(a=@ =(a 2)))
+%%%
+(murn ~[1 2 3] |=(a=@ ?:(=(a 2) ~ `a)))
+%%%
+(weld "abc" "def")
+%%%
+(lent ~[1 2 3])
+%%%
+(snag 1 ~[1 2 3])
+%%%
+(flop ~[1 2 3])
+%%%
+(sort ~[3 1 2] lth)
+%%%
+(~(put by *(map @ @)) 1 2)
+%%%
+(~(get by (malt ~[[1 2]])) 1)
+%%%
+(~(has in (silt ~[1 2])) 1)
+%%%
+~(tap by (malt ~[[1 'a'] [2 'b']]))
+%%%
+=/  m  (malt ~[[1 'a'] [2 'b']])
+(~(run by m) |=(a=@t (cat 3 a a)))
+%%%
+(scot %ud 5)
+%%%
+(slav %ud '5')
+%%%
+"a{<5>}b"
+%%%
+<[1 2]>
+%%%
+>[1 2]<
+%%%
+(trip 'abc')
+%%%
+(crip "abc")
+%%%
+(cat 3 'a' 'b')
+%%%
+(rap 3 ~['a' 'b' 'c'])
+%%%
+(met 3 'abc')
+%%%
+(rsh [3 1] 'abc')
+%%%
+(lsh 3 'a')
+%%%
+(mix 1 2)
+%%%
+(mug 1)
+%%%
+(sham 1)
+%%%
+(shax 1)
+%%%
+(jam [1 2])
+%%%
+(cue 12)
+%%%
+(need `1)
+%%%
+(fall ~ 1)
+%%%
+(bind `1 |=(a=@ +(a)))
+%%%
+(hard @)
+%%%
+((hard @) 1)
+%%%
+((soft @) 1)
+%%%
+(limo ~[1 2 3])
+%%%
+`(list @ud)`~[1 2 3]
+%%%
+`(set @)`(silt ~[1 2])
+%%%
+`(map @ @)`~
+%%%
+*(map @ @)
+%%%
+*(set @)
+%%%
+*(list @)
+%%%
+*(unit @)
+%%%
+*tape
+%%%
+*path
+%%%
+*vase
+%%%
+*hoon
+%%%
+*type
+%%%
+*spec
+%%%
+=/  a=(unit @)  `5
+?~  a  0  (add u.a 1)
+%%%
+=/  a=(list @)  ~[1 2 3]
+|-  ^-  @
+?~  a  0
+(add i.a $(a t.a))
+%%%
+=/  a  (limo ~[1 2 3])
+?~  a  ~  i.a
+%%%
+(~(gas by *(map @tas @)) ~[[%a 1] [%b 2]])
+%%%
+=/  m  (~(gas by *(map @tas @)) ~[[%a 1] [%b 2]])
+(~(got by m) %a)
+%%%
+(~(uni in (silt ~[1 2])) (silt ~[3]))
+%%%
+(~(dif in (silt ~[1 2])) (silt ~[2]))
+%%%
+~(wyt in (silt ~[1 2]))
+%%%
+(scan "123" dem)
+%%%
+(rash '123' dem)
+%%%
+(rust "abc" (star alf))
+%%%
+(ream '1')
+%%%
+(slap !>(~) (ream '1'))
+%%%
+!>((add 1 2))
+%%%
+(slop !>(1) !>(2))
+%%%
+(~(nest ut %noun) | %noun)
+%%%
+(~(play ut %noun) [%sand %ud 1])
+%%%
+(~(mint ut %noun) %noun [%sand %ud 1])
+%%%
+(en:base16:mimes:html [3 0x12.3456])
+%%%
+(add 1 2 3)
+%%%
+(add 'a' %b)
+%%%
+(add [1 2] 3)
+%%%
+(turn ~[1 2 3] add)
+%%%
+(turn ~[[1 2] [3 4]] add)
+%%%
+(roll ~[1 2 3] |=([a=@ b=@] a))
+%%%
+(roll ~[1 2 3] |=([a=@ b=@t] a))
+%%%
+(snag 1 "abc")
+%%%
+(swag [1 2] "abcde")
+%%%
+(oust [1 2] "abcde")
+%%%
+(slag 1 "abc")
+%%%
+(scag 1 "abc")
+%%%
+(find "b" "abc")
+%%%
+(levy ~[1 2] |=(a=@ =(a 1)))
+%%%
+(lien ~[1 2] |=(a=@ =(a 1)))
+%%%
+(zing ~[~[1] ~[2 3]])
+%%%
+(into ~[1 2] 1 5)
+%%%
+(spin ~[1 2 3] 0 |=([a=@ b=@] [+(a) (add a b)]))
+%%%
+(spun ~[1 2 3] |=([a=@ b=@] [+(a) (add a b)]))
+%%%
+(gulf 1 5)
+%%%
+(reap 3 'a')
+%%%
+(homo ~[1 2])
+%%%
+(welp "a" "b")
+%%%
+(head [1 2])
+%%%
+(tail [1 2])
+%%%
+(max 1 2)
+%%%
+(min 1 2)
+%%%
+(pow 2 10)
+%%%
+(sqt 16)
+%%%
+(gth 1 2)
+%%%
+(lte 1 2)
+%%%
+(div 10 3)
+%%%
+(mod 10 3)
+%%%
+(dvr 10 3)
+%%%
+(sun:si 5)
+%%%
+(add:rs .1 .2)
+%%%
+(cury add 1)
+%%%
+((cury add 1) 2)
+%%%
+((curr sub 1) 2)
+%%%
+(corl |=(a=@ +(a)) |=(a=@ +(a)))
+%%%
+(cork |=(a=@ +(a)) |=(a=@ +(a)))
+%%%
+(bake |=(a=@ a) @)
+%%%
+=<  (b 1)
+|%
+++  b  |=(a=@ (add a 1))
+--
+%%%
+=<  (b ~[1 2])
+|%
+++  b  |*(a=(list) (turn a |=(* 1)))
+--
+%%%
+=/  f  |*(a=(list) (lent a))
+(f ~[1 2])
+%%%
+=/  f  |*(a=(list) ?~(a ~ i.a))
+(f ~[1 2])
+%%%
+=/  f  |*(a=(list) ?~(a ~ i.a))
+(f "ab")
+%%%
+=/  f  |*(a=(list) ?~(a ~ i.a))
+(f 1)
+%%%
+=+  a=(malt ~[[1 2]])
+?~  a  ~  n.a
+%%%
+=/  a  `(list @)`~[1 2]
+=.  a  [3 a]
+a
+%%%
+=/  a  `(list @)`~[1 2]
+=.  a  [%a a]
+a
+%%%
+=/  a  `(list @)`~[1 2]
+=.  a  ['a' a]
+a
+%%%
+=/  a  `(list @)`~[1 2]
+=.  a  [[1 2] a]
+a
+%%%
+|=  a=@
+^-  @
+(add a 1)
+%%%
+|=  a=@
+^-  ?
+(gth a 1)
+%%%
+|=  [a=@ b=@]
+^-  (list @)
+~[a b]
+%%%
+|=  a=tape
+^-  @t
+(crip a)
+%%%
+|=  a=tape
+^-  @t
+a
+%%%
+|=  a=(list @)
+^-  @
+(roll a add)
+%%%
+|*  a=(list)
+(turn a same)
+%%%
+|=  a=json
+?+  a  ~
+  [%s *]  p.a
+==
+%%%
+|=  a=path
+?~  a  ~
+i.a
+%%%
+=/  a=hoon  [%sand %ud 1]
+?+  -.a  ~
+  %sand  q.a
+==
+%%%
+=/  a=hoon  [%sand %ud 1]
+?:  ?=(%sand -.a)  q.a  ~
+%%%
+=/  a=type  %noun
+?@  a  a  ~
+%%%
+=/  a=type  %noun
+?-  a
+  %noun  1
+  %void  2
+  [%atom *]  3
+  [%cell *]  4
+  [%core *]  5
+  [%face *]  6
+  [%fork *]  7
+  [%hint *]  8
+  [%hold *]  9
+==
+%%%
+=/  a=spec  [%base %noun]
+?+  -.a  ~
+  %base  p.a
+==
+%%%
+=>  [a=1 ..add]
+(add a 1)
+%%%
+=,  [a=1 b=2]
+(add a b)
+%%%
+=*  x  (add 1 2)
+x
+%%%
+=^  a  b  [1 2]
+(add a 1)
+%%%
+=/  a  ~[1 2 3]
+=/  b  (snag 0 a)
+b
+%%%
+=/  a  "abc"
+?~  a  ~
+i.a
+%%%
+=/  a=(tree @)  ~
+?~  a  0  n.a
+%%%
+=/  a=(pair @ @)  [1 2]
+p.a
+%%%
+=/  a=(trel @ @ @)  [1 2 3]
+r.a
+%%%
+=/  a=(each @ @t)  [%& 1]
+?-  -.a
+  %&  p.a
+  %|  p.a
+==
+%%%
+=/  a=(unit (unit @))  ``1
+?~  a  0
+?~  u.a  0
+u.u.a
+%%%
+=/  a=(list (list @))  ~[~[1]]
+?~  a  ~
+i.a
+%%%
+;:  weld  "a"  "b"  "c"  ==
+%%%
+;~  plug  dem  dem  ==
+%%%
+(;~(plug dem dem) [1 1] "12")
+%%%
+:(add 1 2 3)
+%%%
+:(weld "a" "b" "c")
+%%%
+~(tap in (silt ~[1 2 3]))
+%%%
+~+  (add 1 2)
+%%%
+~>  %bout  (add 1 2)
+%%%
+~&  (add 1 2)  3
+%%%
+~|  (add 1 2)  3
+%%%
+^~  (add 1 2)
+%%%
+^~  `@`1
+%%%
+=+  ^~  (add 1 2)
+-

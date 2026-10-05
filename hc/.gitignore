@@ -1,0 +1,5 @@
+hc
+hc-debug
+hc.dSYM/
+test/__pycache__/
+hc-prof

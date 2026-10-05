@@ -1,0 +1,40 @@
+# kernel: arms, faces, samples, aliases, wet gates, dead branches
+arvo/sys/hoon.hoon 469:4 -> arvo/sys/hoon.hoon 734:5          # weld
+arvo/sys/hoon.hoon 469:9 -> arvo/sys/hoon.hoon 468:8          # gate sample
+arvo/sys/hoon.hoon 631:17 -> arvo/sys/hoon.hoon 628:8         # changed wing on $
+arvo/sys/hoon.hoon 4766:16 -> arvo/sys/hoon.hoon 4757:8       # dead ?~ branch
+arvo/sys/hoon.hoon 4766:14 -> arvo/sys/hoon.hoon 4038:19      # face in a type
+arvo/sys/hoon.hoon 12494:49 -> arvo/sys/hoon.hoon 5191:5      # bas, big $% factories
+arvo/sys/hoon.hoon 1968:32 -> arvo/sys/hoon.hoon 1968:15      # |$ sample
+arvo/sys/zuse.hoon 937:18 -> arvo/sys/zuse.hoon 877:9         # arm under !.
+arvo/sys/zuse.hoon 2409:35 -> arvo/sys/zuse.hoon 2390:13      # v in bytes^v
+arvo/sys/lull.hoon 4366:48 -> arvo/sys/lull.hoon 4350:22      # =a=point
+arvo/sys/arvo.hoon 1331:11 -> arvo/sys/arvo.hoon 1294:9       # arm with +* aliases
+# vanes
+arvo/sys/vane/behn.hoon 110:8 -> arvo/sys/hoon.hoon 734:5
+arvo/sys/vane/behn.hoon 133:20 -> arvo/sys/vane/behn.hoon 45:24
+arvo/sys/vane/behn.hoon 157:44 -> arvo/sys/vane/behn.hoon 45:24   # wing in =^
+arvo/sys/vane/behn.hoon 157:54 -> arvo/sys/lull.hoon 363:7
+arvo/sys/vane/jael.hoon 1348:20 -> arvo/sys/vane/jael.hoon 1126:7  # =* alias
+arvo/sys/vane/iris.hoon 446:7 -> arvo/sys/vane/iris.hoon 421:14    # change on $
+arvo/sys/vane/ames.hoon 7271:72 -> arvo/sys/vane/ames.hoon 7248:21 # ~(rep by ...) types
+# desk files with ford imports
+arvo/app/dojo.hoon 13:13 -> arvo/sur/sole.hoon 6:5            # /- *sole
+arvo/app/dojo.hoon 299:32 -> arvo/sys/hoon.hoon 725:5
+arvo/app/dojo.hoon 7:14 -> arvo/lib/language-server/complete.hoon 1:1   # header, - as /
+arvo/app/hood.hoon 68:22 -> arvo/app/hood.hoon 65:6           # +* alias
+arvo/app/hood.hoon 68:17 -> arvo/app/hood.hoon 2:5            # import face
+# error recovery
+./desk/app/broken.hoon 13:13 -> arvo/sur/sole.hoon 6:5
+./desk/app/broken.hoon 401:13 -> ./desk/app/broken.hoon 401:12
+# marks: /% naves, /$ tubes, /* files
+./desk/app/marks.hoon 6:8 -> arvo/sys/lull.hoon 2794:9        # form of a nave
+./desk/app/marks.hoon 7:10 -> arvo/sys/lull.hoon 2799:9       # through a delegating +grad
+./desk/app/marks.hoon 8:8 -> ./desk/app/marks.hoon 3:5        # tube face
+./desk/app/marks.hoon 9:8 -> ./desk/app/marks.hoon 4:5        # file face
+./desk/app/marks.hoon 1:18 -> arvo/mar/txt.hoon 1:1           # mark in the header
+./desk/app/marks.hoon 3:25 -> arvo/mar/mime.hoon 1:1
+./desk/app/marks.hoon 4:20 -> ./desk/app/marks.hoon 1:1       # /* path
+arvo/gen/hood/clay/merge.hoon 22:19 -> arvo/sys/arvo.hoon 51:5   # name inside a nested spec
+./desk/app/shadow.hoon 4:5 -> ./desk/app/shadow.hoon 3:7        # one-letter face, shadowed
+./desk/app/shadow.hoon 5:4 -> ./desk/app/shadow.hoon 1:5        # the outer one

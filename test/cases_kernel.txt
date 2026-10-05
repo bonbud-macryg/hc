@@ -1,0 +1,84 @@
+1
+%%%
+(add 1 2)
+%%%
+(sub 5 3)
+%%%
+(turn ~[1 2 3] |=(a=@ +(a)))
+%%%
+(lent ~[1 2 3])
+%%%
+(weld "ab" "cd")
+%%%
+(~(put by *(map @ @)) 1 2)
+%%%
+(~(get by *(map @t @ud)) 'a')
+%%%
+(scot %ud 5)
+%%%
+`(list @)`~[1 2]
+%%%
+(snag 0 `(list @)`~[1 2])
+%%%
+*(unit @)
+%%%
+(need `(unit @)`[~ 1])
+%%%
+(roll ~[1 2 3] add)
+%%%
+(cat 3 'a' 'b')
+%%%
+(trip 'abc')
+%%%
+(crip "abc")
+%%%
+=/  m  *(map @ud @t)
+(~(has by m) 1)
+%%%
+(rash '12' dem)
+%%%
+(flop ~[1 2])
+%%%
+(sort ~[3 1 2] lth)
+%%%
+(~(gas in *(set @)) ~[1 2])
+%%%
+hoon-version
+%%%
+add
+%%%
+by
+%%%
+(mug 1)
+%%%
+(jam 5)
+%%%
+(cue 5)
+%%%
+~(tap by *(map @ @))
+%%%
+(murn ~[1 2] |=(a=@ `(unit @)`[~ a]))
+%%%
+(skim ~[1 2] |=(a=@ =(1 a)))
+%%%
+(rep 3 ~[1 2])
+%%%
+(slav %ud '5')
+%%%
+(yore *@da)
+
+%%%
+=/  m  *(map @ @)
+(~(rep by m) |=([[k=@ v=@] acc=[p=@ q=@]] [+(p.acc) q.acc]))
+%%%
+=/  m  *(map @ @)
+=/  a  (~(rep by m) |=([[k=@ v=@] acc=[p=@ q=@]] [+(p.acc) q.acc]))
+-.a
+%%%
+=/  m  *(map @ @)
+=/  a  (~(rep by m) |=([[k=@ v=@] acc=[p=(list @) q=@]] [[k p.acc] q.acc]))
+-.a
+%%%
+=/  m  *(map @ @)
+=^  p  q  (~(rep by m) |=([[k=@ v=@] acc=[p=(list @) q=@]] [[k p.acc] q.acc]))
+p

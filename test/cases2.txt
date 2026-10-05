@@ -1,0 +1,44 @@
+;div;
+%%%
+;div.foo.bar#baz: hello
+%%%
+;a/"http://x": link
+%%%
+;p: hi {<a>} there
+%%%
+;div
+  ;p: one
+  ;p: two
+==
+%%%
+;div(class "x", id "y");
+%%%
+;+  a
+%%%
+;*  a
+%%%
+;div
+  ; some text
+  ;br;
+==
+%%%
+;div: "quoted"
+%%%
+;div
+  =class  "foo"
+  ;span: x
+==
+%%%
+;script
+  ; var x = 1;
+==
+%%%
+[;div; ~]
+%%%
+(foo ;p:"x")
+%%%
+;div:(;p:"a" ;p:"b")
+%%%
+;p:"a {b} c"
+%%%
+;p:"a \{b} c"
