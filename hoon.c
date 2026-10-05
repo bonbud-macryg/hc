@@ -65,13 +65,19 @@ static i32 msvcclzll(u64 v) {
   _BitScanReverse64(&i, v);
   return 63 - (i32)i;
 }
-static usize msvcstrlen(char *s) {
+#define __builtin_clzll(v)  msvcclzll(v)
+#endif
+
+// __builtin_strlen of a string not known at compile time is a call to
+// strlen, which Windows and Linux, built without libc, don't have; and
+// cl.exe has no __builtin_strlen
+#if defined(_WIN32) || defined(__linux__)
+static usize ownstrlen(char *s) {
   usize n = 0;
   while (s[n]) n++;
   return n;
 }
-#define __builtin_clzll(v)  msvcclzll(v)
-#define __builtin_strlen(s) msvcstrlen(s)
+#define __builtin_strlen(s) ownstrlen(s)
 #endif
 
 #define MAX(x, y) ( ((x) > (y)) ? (x) : (y) )
@@ -83,6 +89,7 @@ void osfail(void);
 void osrelease(byte *, byte *);
 b32  oswrite(i32, u8 *, i32);
 size osread(i32, u8 *, size);
+byte *osreserve(size);
 
 typedef struct {
   byte *dat;
@@ -14433,6 +14440,257 @@ i32 splitargs(arena *a, char *cmd, char ***out) {
   return argc;
 }
 
+#elif defined(__linux__)
+
+// Linux without libc, as Windows is without its C runtime: system calls
+// made directly, and _start, below, in place of crt1's
+
+#if defined(__x86_64__)
+enum {
+  sys_read = 0, sys_write = 1, sys_close = 3, sys_mmap = 9, sys_madvise = 28,
+  sys_getdents64 = 217, sys_exit_group = 231, sys_openat = 257, sys_mkdirat = 258,
+  sys_unlinkat = 263, sys_renameat = 264, sys_readlinkat = 267, sys_faccessat = 269,
+  sys_ppoll = 271,
+  o_directory = 0x10000,
+};
+
+i64 syscall6(i64 n, i64 a, i64 b, i64 c, i64 d, i64 e, i64 f) {
+  register i64 r10 __asm__("r10") = d;
+  register i64 r8 __asm__("r8") = e;
+  register i64 r9 __asm__("r9") = f;
+  i64 r;
+  __asm__ volatile("syscall"
+                   : "=a"(r)
+                   : "a"(n), "D"(a), "S"(b), "d"(c), "r"(r10), "r"(r8), "r"(r9)
+                   : "rcx", "r11", "memory");
+  return r;
+}
+
+// the stack as the kernel leaves it to linuxstart, aligned for a call
+__asm__(".globl _start\n"
+        "_start:\n"
+        "  xor %ebp, %ebp\n"
+        "  mov %rsp, %rdi\n"
+        "  and $-16, %rsp\n"
+        "  call linuxstart\n"
+        "  hlt\n");
+#elif defined(__aarch64__)
+enum {
+  sys_read = 63, sys_write = 64, sys_close = 57, sys_mmap = 222, sys_madvise = 233,
+  sys_getdents64 = 61, sys_exit_group = 94, sys_openat = 56, sys_mkdirat = 34,
+  sys_unlinkat = 35, sys_renameat = 38, sys_readlinkat = 78, sys_faccessat = 48,
+  sys_ppoll = 73,
+  o_directory = 0x4000,
+};
+
+i64 syscall6(i64 n, i64 a, i64 b, i64 c, i64 d, i64 e, i64 f) {
+  register i64 x8 __asm__("x8") = n;
+  register i64 x0 __asm__("x0") = a;
+  register i64 x1 __asm__("x1") = b;
+  register i64 x2 __asm__("x2") = c;
+  register i64 x3 __asm__("x3") = d;
+  register i64 x4 __asm__("x4") = e;
+  register i64 x5 __asm__("x5") = f;
+  __asm__ volatile("svc 0"
+                   : "+r"(x0)
+                   : "r"(x8), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
+                   : "memory");
+  return x0;
+}
+
+__asm__(".globl _start\n"
+        "_start:\n"
+        "  mov x29, #0\n"
+        "  mov x30, #0\n"
+        "  mov x0, sp\n"
+        "  bl linuxstart\n"
+        "  brk #0\n");
+#else
+#error "Linux without libc on x86-64 and arm64 only"
+#endif
+
+#define SYS(n, a, b, c) syscall6((n), (i64)(a), (i64)(b), (i64)(c), 0, 0, 0)
+
+enum { at_fdcwd = -100 };
+
+char **linuxenv;
+
+i32 main(i32, char **);
+
+// argc, then argv and a 0, then the environment and a 0
+__attribute__((used)) void linuxstart(i64 *sp) {
+  i32 argc = (i32)sp[0];
+  char **argv = (char **)(sp + 1);
+  linuxenv = argv + argc + 1;
+  i32 r = main(argc, argv);
+  SYS(sys_exit_group, r, 0, 0);
+  __builtin_unreachable();
+}
+
+void osfail(void) {
+  SYS(sys_exit_group, 1, 0, 0);
+  __builtin_unreachable();
+}
+
+// address space for an arena, reserved and not touched until used. Not
+// counted against memory either, as malloc's would be: with the kernel's
+// default heuristic, more than RAM and swap together in one request is
+// refused, and WSL's VM has much less than this
+byte *osreserve(size cap) {
+  // PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE
+  i64 r = syscall6(sys_mmap, 0, cap, 3, 0x02 | 0x20 | 0x4000, -1, 0);
+  return r < 0 && r > -4096 ? 0 : (byte *)r;
+}
+
+// return the whole pages in [beg, end) to the system
+void osrelease(byte *beg, byte *end) {
+  byte *lo = (byte*)(((uptr)beg + 0x3fff) & ~(uptr)0x3fff);
+  byte *hi = (byte*)((uptr)end & ~(uptr)0x3fff);
+  if (hi <= lo) return;
+  SYS(sys_madvise, lo, hi - lo, 4);  // MADV_DONTNEED
+}
+
+b32 oswrite(i32 fd, u8 *buf, i32 len) {
+  for (i32 off = 0; off < len;) {
+    i64 r = SYS(sys_write, fd, buf + off, len - off);
+    if (r < 1) return 0;
+    off += (i32)r;
+  }
+  return 1;
+}
+
+size osread(i32 fd, u8 *buf, size len) {
+  return SYS(sys_read, fd, buf, len);
+}
+
+b32 osreadfile(arena *a, char *path, s8 *out) {
+  i64 fd = syscall6(sys_openat, at_fdcwd, (i64)path, 0, 0, 0, 0);  // O_RDONLY
+  if (fd < 0) return 0;
+  size cap = 1 << 16;
+  s8 r = {new(a, u8, cap), 0};
+  for (;;) {
+    if (r.len == cap) {
+      u8 *more = new(a, u8, cap*2);
+      copy((byte*)more, (byte*)r.buf, r.len);
+      r.buf = more;
+      cap *= 2;
+    }
+    size n = SYS(sys_read, fd, r.buf + r.len, cap - r.len);
+    if (n < 0) {
+      // a directory, say
+      SYS(sys_close, fd, 0, 0);
+      return 0;
+    }
+    if (!n) break;
+    r.len += n;
+  }
+  SYS(sys_close, fd, 0, 0);
+  *out = r;
+  return 1;
+}
+
+// a file written whole, by way of a temporary beside it, so that one
+// either has all of it or none
+b32 oswritefile(arena *a, char *path, u8 *buf, size len) {
+  size n = 0;
+  while (path[n]) n++;
+  char *tmp = new(a, char, n + 5);
+  copy((byte*)tmp, (byte*)path, n);
+  copy((byte*)tmp + n, (byte*)".tmp", 5);
+  // O_WRONLY|O_CREAT|O_TRUNC
+  i64 fd = syscall6(sys_openat, at_fdcwd, (i64)tmp, 0x1 | 0x40 | 0x200, 0644, 0, 0);
+  if (fd < 0) return 0;
+  b32 ok = 1;
+  for (size off = 0; ok && off < len; ) {
+    size got = SYS(sys_write, fd, buf + off, len - off);
+    ok = got > 0;
+    off += got;
+  }
+  ok &= SYS(sys_close, fd, 0, 0) == 0;
+  if (!ok || syscall6(sys_renameat, at_fdcwd, (i64)tmp, at_fdcwd, (i64)path, 0, 0)) {
+    SYS(sys_unlinkat, at_fdcwd, tmp, 0);
+    return 0;
+  }
+  return 1;
+}
+
+// an environment variable, or 0
+char *osgetenv(char *name) {
+  for (char **e = linuxenv; *e; e++) {
+    size i = 0;
+    while (name[i] && (*e)[i] == name[i]) i++;
+    if (!name[i] && (*e)[i] == '=') return *e + i + 1;
+  }
+  return 0;
+}
+
+void osmkdir(char *path) {
+  SYS(sys_mkdirat, at_fdcwd, path, 0755);
+}
+
+// a path made absolute, with links followed; 0 if there's none. As the
+// kernel names an open file in /proc, which WSL has too
+char *osabspath(arena *a, char *path) {
+  i64 fd = SYS(sys_openat, at_fdcwd, path, 0x200000 | 0x80000);  // O_PATH|O_CLOEXEC
+  if (fd < 0) return 0;
+  char link[32] = "/proc/self/fd/";
+  size k = 14;
+  char digits[20];
+  size nd = 0;
+  for (i64 v = fd; v || !nd; v /= 10) digits[nd++] = (char)('0' + v % 10);
+  while (nd) link[k++] = digits[--nd];
+  link[k] = 0;
+  size cap = 4096;
+  char *b = new(a, char, cap);
+  i64 n = syscall6(sys_readlinkat, at_fdcwd, (i64)link, (i64)b, cap - 1, 0, 0);
+  SYS(sys_close, fd, 0, 0);
+  if (n <= 0 || n >= cap - 1) return 0;
+  b[n] = 0;
+  return b;
+}
+
+b32 osisdir(char *path) {
+  i64 fd = SYS(sys_openat, at_fdcwd, path, o_directory | 0x80000);  // O_RDONLY|O_CLOEXEC
+  if (fd < 0) return 0;
+  SYS(sys_close, fd, 0, 0);
+  return 1;
+}
+
+b32 osexists(char *path) {
+  return SYS(sys_faccessat, at_fdcwd, path, 0) == 0;  // F_OK
+}
+
+// the names in a directory, but . and .., in *out; how many
+size oslistdir(arena *a, char *path, char ***out) {
+  i64 fd = SYS(sys_openat, at_fdcwd, path, o_directory | 0x80000);
+  if (fd < 0) return 0;
+  char **names = 0;
+  size len = 0;
+  _Alignas(8) u8 buf[1 << 14];
+  for (;;) {
+    i64 got = SYS(sys_getdents64, fd, buf, sizeof(buf));
+    if (got <= 0) break;
+    for (i64 at = 0; at < got; ) {
+      // struct linux_dirent64: the length of the record at 16, the name at 19
+      u16 reclen = (u16)(buf[at+16] | buf[at+17] << 8);
+      char *name = (char*)buf + at + 19;
+      at += reclen;
+      if (name[0] == '.' && (!name[1] || (name[1] == '.' && !name[2]))) continue;
+      size k = 0;
+      while (name[k]) k++;
+      char *c = new(a, char, k + 1);
+      copy((byte*)c, (byte*)name, k + 1);
+      char **more = new(a, char *, len + 1);
+      if (len) copy((byte*)more, (byte*)names, len * (size)sizeof(char *));
+      more[len++] = c;
+      names = more;
+    }
+  }
+  SYS(sys_close, fd, 0, 0);
+  *out = names;
+  return len;
+}
+
 #else
 
 void _exit(i32);
@@ -14459,6 +14717,11 @@ i32 access(char *, i32);
 
 void osfail(void) {
   _exit(1);
+}
+
+// address space for an arena, reserved and not touched until used
+byte *osreserve(size cap) {
+  return malloc((usize)cap);
 }
 
 // return the whole pages in [beg, end) to the system

@@ -2374,6 +2374,12 @@ b32 osinputready(void) {
   u32 n = 0;
   return PeekNamedPipe(GetStdHandle(-10), 0, 0, 0, &n, 0) && n > 0;
 }
+#elif defined(__linux__)
+b32 osinputready(void) {
+  struct { i32 fd; i16 events; i16 revents; } p = {0, 1, 0};   // stdin, POLLIN
+  i64 zero[2] = {0, 0};   // a timespec, so not waiting
+  return syscall6(sys_ppoll, (i64)&p, 1, (i64)zero, 0, 0, 0) > 0;
+}
 #else
 typedef struct {
   i32 fd;
@@ -2732,7 +2738,7 @@ i32 main(i32 argc, char **argv) {
   // reserved, not touched until used
   size cap = (size)1 << 36;
   arena a = {0};
-  a.beg = malloc((usize)cap);
+  a.beg = osreserve(cap);
   if (!a.beg) oom();
   a.dat = a.beg;
   a.end = a.beg + cap;

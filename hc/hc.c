@@ -582,7 +582,7 @@ i32 main(i32 argc, char **argv) {
   // reserved, not touched until used
   size cap = (size)1 << 36;
   arena a = {0};
-  a.beg = malloc((usize)cap);
+  a.beg = osreserve(cap);
   if (!a.beg) oom();
   a.dat = a.beg;
   a.end = a.beg + cap;
