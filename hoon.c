@@ -124,6 +124,30 @@ char *osabspath(arena *, char *);
 b32  osisdir(char *);
 b32  osexists(char *);
 
+
+void * memset(void *, int, size_t);
+#pragma intrinsic(memset)
+
+#pragma function(memset)
+void *memset(void *d, int c, size_t n) {
+  char *dst = (char *)d;
+  for (; n; n--) *dst++ = (char)c;
+  return d;
+}
+
+void* memcpy(void *, const void *, size_t);
+#pragma intrinsic(memcpy)
+
+#pragma function(memcpy)
+void* memcpy(void* dest, const void* src, size_t count) {
+  char* dest8 = (char*)dest;
+  const char* src8 = (const char*)src;
+  while(count--) {
+    *dest8++ = *src8++;
+  }
+  return dest;
+}
+
 void copy(byte *restrict dst, byte *restrict src, size len) {
   for (size i = 0; i < len; i++) {
     dst[i] = src[i];
