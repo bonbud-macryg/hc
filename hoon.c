@@ -4809,6 +4809,7 @@ noun limb(parser *p, size *pos) {
 }
 
 noun ropex(parser *p, size *pos, b32 tol) {
+  size from = *pos;
   noun l = limb(p, pos);
   if (!l) return 0;
   size base = p->stk.len;
@@ -4816,6 +4817,9 @@ noun ropex(parser *p, size *pos, b32 tol) {
   for (;;) {
     size s = *pos;
     if (chr(p, pos, '.') && (l = limb(p, pos))) {
+      // ..a is the core that holds a, as ..zuse and ..^$: the first dot
+      // is the subject and the second joins it to a, colored as one mark
+      if (s == from + 1 && p->buf[from] == '.') delimiter(p, from);
       delimiter(p, s);
       *push(&p->stk, p->a) = l;
       continue;
