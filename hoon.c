@@ -5702,7 +5702,8 @@ noun bola(parser *p, size *pos, b32 tol) {
   if (!jest(p, pos, "++") || !gap(p, pos)) return 0;
   size t = *pos;
   if (!(n = symbuc(p, pos))) return 0;
-  note(p, s, s + 2, tok_keyword);
+  // the rune is part of the arm name, as in tree-sitter-hoon
+  note(p, s, s + 2, tok_function);
   note(p, t, *pos, tok_function);
   if (!gap(p, pos) || !(h = loaf(p, pos, tol))) return 0;
   return C2(n, h);
