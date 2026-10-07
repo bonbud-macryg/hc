@@ -4764,7 +4764,9 @@ noun limb(parser *p, size *pos) {
   noun v;
   switch (c) {
   case '$':
+    // the arm of a gate or trap
     chr(p, pos, '$');
+    note(p, s, *pos, tok_function);
     return nul;
   case ',':
     chr(p, pos, ',');
@@ -4777,6 +4779,7 @@ noun limb(parser *p, size *pos) {
     noun b = symbuc(p, pos);
     if (!b) return 0;
     for (size i = 0; i < n; i++) sugar(p, s + i);
+    if (b == nul) note(p, s + n, *pos, tok_function);
     return C3(NO, D((u64)n), C2(nul, b));
   }
   case '+':
@@ -5245,6 +5248,7 @@ noun wede(parser *p, size *pos) {
 }
 
 noun rump(parser *p, size *pos) {
+  size from = *pos;
   noun a = rope(p, pos);
   if (!a) return 0;
   size s = *pos;
@@ -5254,6 +5258,8 @@ noun rump(parser *p, size *pos) {
     return C2(K("wing"), a);
   }
   if (!(isatom(hd(a)) && atomis(tl(a), 0))) return 0;
+  // the $ of $/a and $+a is the term %$, not the arm limb took it for
+  if (p->buf[from] == '$') note(p, from, s, tok_term);
   return C2(C3(K("rock"), K("tas"), hd(a)), b);
 }
 
