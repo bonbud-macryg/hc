@@ -1578,7 +1578,7 @@ b32 spent(parser *p) {
 
 enum {
   tok_comment, tok_string, tok_number, tok_keyword, tok_function,
-  tok_variable, tok_type, tok_term, tok_delimiter,
+  tok_variable, tok_type, tok_term, tok_operator,
 };
 
 typedef struct {
@@ -1608,7 +1608,7 @@ void sugar(parser *p, size at) { note(p, at, at + 1, tok_keyword); }
 
 // the . of a.b and the : of a:b, as in tree-sitter-hoon. One byte long,
 // it paints over the name, type or function it sits in
-void delimiter(parser *p, size at) { note(p, at, at + 1, tok_delimiter); }
+void delimiter(parser *p, size at) { note(p, at, at + 1, tok_operator); }
 
 // Whitespace
 
@@ -4786,9 +4786,13 @@ noun limb(parser *p, size *pos) {
     chr(p, pos, '+');
     if ((v = dim(p, pos))) return C2(YES, v);
     *pos = s;
-    return (v = ven(p, pos)) ? C2(YES, v) : 0;
+    // fallthrough
   case '-':
-    return (v = ven(p, pos)) ? C2(YES, v) : 0;
+    // lark notation, as +>- for the head of the tail of the tail: of
+    // any length, colored whole as an operator
+    if (!(v = ven(p, pos))) return 0;
+    note(p, s, *pos, tok_operator);
+    return C2(YES, v);
   case '&':
     chr(p, pos, '&');
     return (v = dim(p, pos)) && (v = itemaxis(p, v, 2)) ? C2(YES, v) : 0;
@@ -5571,8 +5575,17 @@ noun scatx(parser *p, size *pos, b32 tol) {
 
 noun scadx(parser *p, size *pos, b32 tol);
 
-// what a wide form is, for highlighting
-i32 scatkind(parser *p, size start, noun r) {
+// whether the text from s to e is lark notation and nothing more
+b32 larkonly(parser *p, size s, size e) {
+  for (size i = s; i < e; i++) {
+    u8 c = p->buf[i];
+    if (c != '+' && c != '-' && c != '<' && c != '>') return 0;
+  }
+  return 1;
+}
+
+// what a wide form from start to end is, for highlighting
+i32 scatkind(parser *p, size start, size end, noun r) {
   noun tag = hd(r);
   u64 t = atomfits(tag) ? atomlow(tag) : 0;
   if (t == TW("clsg") && p->buf[start] == '/') return tok_string;
@@ -5585,7 +5598,10 @@ i32 scatkind(parser *p, size start, noun r) {
   if (t == TW("knit")) return tok_string;
   if (t == TW("leaf")) return tok_term;
   if (t == TW("base") || t == TW("like")) return tok_type;
-  if (t == TW("wing") || t == TW("cnts")) return tok_variable;
+  if (t == TW("wing") || t == TW("cnts")) {
+    // a wing that is one lark limb keeps the color limb gave it
+    return larkonly(p, start, end) ? tok_operator : tok_variable;
+  }
   if (t == TW("bust")) return tok_number;
   return -1;
 }
@@ -5594,7 +5610,7 @@ noun scat(parser *p, size *pos) {
   size s = *pos;
   noun r = scatx(p, pos, 0);
   if (r && p->toks && iscell(r)) {
-    i32 k = scatkind(p, s, r);
+    i32 k = scatkind(p, s, *pos, r);
     if (k >= 0) note(p, s, *pos, k);
   }
   return r;
@@ -5715,7 +5731,7 @@ noun scad(parser *p, size *pos) {
   size s = *pos;
   noun r = scadx(p, pos, 0);
   if (r && p->toks && iscell(r)) {
-    i32 k = scatkind(p, s, r);
+    i32 k = scatkind(p, s, *pos, r);
     if (k >= 0) note(p, s, *pos, k);
   }
   return r;
