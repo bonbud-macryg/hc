@@ -3321,9 +3321,9 @@ noun roperule(parser *p, size *pos, b32 tol) { return rope(p, pos); }
 noun symrule(parser *p, size *pos, b32 tol) { return sym(p, pos); }
 
 // a name at s, or names joined by :, is a function, as after the bracket
-// in (add a b), (pure:m a), ~(put by m) and a(b 1), and as the door by
-// in ~(put by m); not (snag.lib a), since an arm isn't reached with a
-// dot. The names are noted apiece, to paint over the wings they were
+// in (add a b), (pure:m a), ~(put by m) and a(b 1), as the door by in
+// ~(put by m), and as after the rune in %-  add; not (snag.lib a), since
+// an arm isn't reached with a dot. The names are noted apiece, to paint over the wings they were
 // noted as, and to leave the colons between them as delimiters
 void notefun(parser *p, size s) {
   if (!p->toks) return;
@@ -3338,7 +3338,7 @@ void notefun(parser *p, size s) {
     if (e >= p->len || b[e] != ':') break;
     e++;
   }
-  if (b[e] != ' ' && b[e] != ')' && b[e] != '(') return;
+  if (e < p->len && b[e] != ' ' && b[e] != '\n' && b[e] != ')' && b[e] != '(') return;
   for (size i = 0; i < n; i++) {
     size to = i + 1 < n ? at[i+1] - 1 : e;
     note(p, at[i], to, tok_function);
@@ -6457,6 +6457,25 @@ runedef *findrune(parser *p, size *pos, runedef *tab, size n) {
   return 0;
 }
 
+// the gate after %-, %+, %^ and %:, and the arm and door after %~, are
+// functions, as they are in (add a b) and ~(put by m). s is the rune.
+// Not the gate of %., which comes last, nor the wing of %=, %_ and %*,
+// which may be a leg
+void noterunefun(parser *p, size s, runedef *r) {
+  if (!p->toks || r->c1 != '%') return;
+  u8 *b = p->buf;
+  b32 door = r->c2 == '~';
+  if (!door && r->c2 != '-' && r->c2 != '+' && r->c2 != '^' && r->c2 != ':') return;
+  size e = s + 2;
+  if (e < p->len && b[e] == '(') e++;
+  else while (e < p->len && (b[e] == ' ' || b[e] == '\n')) e++;
+  notefun(p, e);
+  if (!door) return;
+  while (e < p->len && b[e] != ' ' && b[e] != '\n') e++;
+  while (e < p->len && (b[e] == ' ' || b[e] == '\n')) e++;
+  notefun(p, e);
+}
+
 noun expression(parser *p, size *pos, b32 tol) {
   size s = *pos;
   runedef *r = findrune(p, pos, hoonrunes, countof(hoonrunes));
@@ -6464,6 +6483,7 @@ noun expression(parser *p, size *pos, b32 tol) {
   noun v = toad(p, pos, tol, r->har);
   if (!v) return 0;
   note(p, s, s + 2, tok_keyword);
+  noterunefun(p, s, r);
   switch (r->kind) {
   case rune_runo: return C3(term(r->tag), nul, v);
   case rune_ktcl: return C3(K("ktcl"), term(r->tag), v);
