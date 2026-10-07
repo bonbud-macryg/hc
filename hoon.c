@@ -3312,15 +3312,15 @@ noun wyderule(parser *p, size *pos, b32 tol) { return wyde(p, pos); }
 noun roperule(parser *p, size *pos, b32 tol) { return rope(p, pos); }
 noun symrule(parser *p, size *pos, b32 tol) { return sym(p, pos); }
 
-// what comes after a bracket is a function when it's a name, or names
-// joined by :, as in (add a b), (pure:m a), ~(put by m) and a(b 1); not
-// (snag.lib a), since an arm isn't reached with a dot. s is the bracket,
-// which is left out. The names and colons are noted apiece, to paint
-// over the wings they were noted as
-void notecall(parser *p, size s) {
+// a name at s, or names joined by :, is a function, as after the bracket
+// in (add a b), (pure:m a), ~(put by m) and a(b 1), and as the door by
+// in ~(put by m); not (snag.lib a), since an arm isn't reached with a
+// dot. The names and colons are noted apiece, to paint over the wings
+// they were noted as
+void notefun(parser *p, size s) {
   if (!p->toks) return;
   u8 *b = p->buf;
-  size e = s + 1, n = 0;
+  size e = s, n = 0;
   size at[64];
   for (;;) {
     if (e >= p->len || b[e] < 'a' || b[e] > 'z' || n == countof(at)) return;
@@ -3351,7 +3351,7 @@ noun call(parser *p, size *pos) {
   size s = *pos;
   noun r = parens(p, pos, widerule);
   if (!r) return 0;
-  notecall(p, s);
+  notefun(p, s + 1);
   return C2(K("cncl"), r);
 }
 
@@ -5432,11 +5432,14 @@ noun scatx(parser *p, size *pos, b32 tol) {
     chr(p, pos, '~');
     if ((r = brackets(p, pos, widerule))) return C2(K("clsg"), r);
     *pos = s + 1;
-    if (chr(p, pos, '(') && (x = rope(p, pos)) && ace(p, pos) && (r = wide(p, pos))
-        && ace(p, pos)) {
-      noun l = most(p, pos, 0, sepace, widerule);
-      if (l && chr(p, pos, ')')) {
-        notecall(p, s + 1);
+    if (chr(p, pos, '(') && (x = rope(p, pos)) && ace(p, pos)) {
+      // ~(arm door sample)
+      size door = *pos;
+      noun l;
+      if ((r = wide(p, pos)) && ace(p, pos) && (l = most(p, pos, 0, sepace, widerule))
+          && chr(p, pos, ')')) {
+        notefun(p, s + 2);
+        notefun(p, door);
         return C4(K("cnsg"), x, r, l);
       }
     }
@@ -5549,7 +5552,7 @@ noun scadx(parser *p, size *pos, b32 tol) {
   case '(':
     chr(p, pos, '(');
     if (!(x = wide(p, pos))) return 0;
-    notecall(p, s);
+    notefun(p, s + 1);
     return makerest(p, pos, x);
   case '[':
     return (r = brackets(p, pos, wyderule)) ? C2(K("bccl"), r) : 0;
@@ -6492,7 +6495,7 @@ noun longx(parser *p, size *pos, b32 tol) {
       if (xs.len && chr(p, pos, ')')) {
         x = nounslist(p, &xs);
         kind = 'l';
-        notecall(p, s);
+        notefun(p, s + 1);
       }
     }
   }
