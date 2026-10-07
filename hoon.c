@@ -6549,6 +6549,7 @@ noun structure(parser *p, size *pos, b32 tol) {
 // Irregular suffixes: a=b, a:b, a^b, a(b c)
 
 noun longx(parser *p, size *pos, b32 tol) {
+  size from = *pos;
   noun ros = scat(p, pos);
   if (!ros) return 0;
   size s = *pos;
@@ -6584,6 +6585,9 @@ noun longx(parser *p, size *pos, b32 tol) {
       if (xs.len && chr(p, pos, ')')) {
         x = nounslist(p, &xs);
         kind = 'l';
+        // $ with changes is the arm of a gate or trap, called again;
+        // any other name may be a leg as well as an arm, and is left
+        if (p->buf[from] == '$' && s == from + 1) note(p, from, s, tok_function);
         notefun(p, s + 1);
       }
     }
