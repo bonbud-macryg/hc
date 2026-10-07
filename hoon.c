@@ -1578,7 +1578,7 @@ b32 spent(parser *p) {
 
 enum {
   tok_comment, tok_string, tok_number, tok_keyword, tok_function,
-  tok_variable, tok_type, tok_term,
+  tok_variable, tok_type, tok_term, tok_delimiter,
 };
 
 typedef struct {
@@ -1605,6 +1605,10 @@ void note(parser *p, size start, size end, i32 type) {
 // as one: the = of =(a b) for .=, the _ of _a for $_. Brackets alone,
 // as in (a b) and [a b], are left plain
 void sugar(parser *p, size at) { note(p, at, at + 1, tok_keyword); }
+
+// the . of a.b and the : of a:b, as in tree-sitter-hoon. One byte long,
+// it paints over the name, type or function it sits in
+void delimiter(parser *p, size at) { note(p, at, at + 1, tok_delimiter); }
 
 // Whitespace
 
@@ -3309,7 +3313,6 @@ noun most(parser *p, size *pos, b32 tol, b32 (*sep)(parser *, size *, b32), rule
 
 b32 sepace(parser *p, size *pos, b32 tol) { return ace(p, pos); }
 b32 sepgap(parser *p, size *pos, b32 tol) { return gap(p, pos); }
-b32 sepcol(parser *p, size *pos, b32 tol) { return chr(p, pos, ':'); }
 
 noun widerule(parser *p, size *pos, b32 tol) { return wide(p, pos); }
 noun tallrule(parser *p, size *pos, b32 tol) { return tall(p, pos); }
@@ -3320,8 +3323,8 @@ noun symrule(parser *p, size *pos, b32 tol) { return sym(p, pos); }
 // a name at s, or names joined by :, is a function, as after the bracket
 // in (add a b), (pure:m a), ~(put by m) and a(b 1), and as the door by
 // in ~(put by m); not (snag.lib a), since an arm isn't reached with a
-// dot. The names and colons are noted apiece, to paint over the wings
-// they were noted as
+// dot. The names are noted apiece, to paint over the wings they were
+// noted as, and to leave the colons between them as delimiters
 void notefun(parser *p, size s) {
   if (!p->toks) return;
   u8 *b = p->buf;
@@ -3339,7 +3342,6 @@ void notefun(parser *p, size s) {
   for (size i = 0; i < n; i++) {
     size to = i + 1 < n ? at[i+1] - 1 : e;
     note(p, at[i], to, tok_function);
-    if (i + 1 < n) note(p, to, to + 1, tok_function);
   }
 }
 
@@ -4804,6 +4806,7 @@ noun ropex(parser *p, size *pos, b32 tol) {
   for (;;) {
     size s = *pos;
     if (chr(p, pos, '.') && (l = limb(p, pos))) {
+      delimiter(p, s);
       *push(&p->stk, p->a) = l;
       continue;
     }
@@ -4817,7 +4820,20 @@ noun rope(parser *p, size *pos) {
 }
 
 noun ropa(parser *p, size *pos, b32 tol) {
-  return most(p, pos, 0, sepcol, roperule);
+  noun r = rope(p, pos);
+  if (!r) return 0;
+  size base = p->stk.len;
+  *push(&p->stk, p->a) = r;
+  for (;;) {
+    size s = *pos;
+    if (chr(p, pos, ':') && (r = rope(p, pos))) {
+      delimiter(p, s);
+      *push(&p->stk, p->a) = r;
+      continue;
+    }
+    *pos = s;
+    return stklist(p, base);
+  }
 }
 
 // Paths
@@ -6619,7 +6635,8 @@ noun longx(parser *p, size *pos, b32 tol) {
     *pos = s;
     return ros;
   }
-  if (kind != 'l') sugar(p, s);
+  if (kind == ':') delimiter(p, s);
+  else if (kind != 'l') sugar(p, s);
   return r;
 }
 
