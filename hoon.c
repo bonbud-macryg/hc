@@ -4773,12 +4773,12 @@ noun limb(parser *p, size *pos) {
     return C3(NO, nul, nul);
   case '^': {
     // ^a skips the nearest a and takes the next, ^^a the next but one:
-    // the carets are colored as a rune is
+    // the carets are colored whole as an operator, as lark notation is
     size n = 0;
     while (chr(p, pos, '^')) n++;
     noun b = symbuc(p, pos);
     if (!b) return 0;
-    for (size i = 0; i < n; i++) sugar(p, s + i);
+    note(p, s, s + n, tok_operator);
     if (b == nul) note(p, s + n, *pos, tok_function);
     return C3(NO, D((u64)n), C2(nul, b));
   }
