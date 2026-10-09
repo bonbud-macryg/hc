@@ -3321,10 +3321,11 @@ noun roperule(parser *p, size *pos, b32 tol) { return rope(p, pos); }
 noun symrule(parser *p, size *pos, b32 tol) { return sym(p, pos); }
 
 // a name at s, or names joined by :, is a function, as after the bracket
-// in (add a b), (pure:m a), ~(put by m) and a(b 1), as the door by in
-// ~(put by m), and as after the rune in %-  add; not (snag.lib a), since
-// an arm isn't reached with a dot. The names are noted apiece, to paint over the wings they were
-// noted as, and to leave the colons between them as delimiters
+// in (add a b), (pure:m a) and ~(put by m), as the door by in ~(put by m),
+// and as after the rune in %-  add; not (snag.lib a), since an arm isn't
+// reached with a dot, nor the b of a(b 1), which is a wing to change. The
+// names are noted apiece, to paint over the wings they were noted as, and
+// to leave the colons between them as delimiters
 void notefun(parser *p, size s) {
   if (!p->toks) return;
   u8 *b = p->buf;
@@ -6640,7 +6641,13 @@ noun longx(parser *p, size *pos, b32 tol) {
           *pos = t;
           break;
         }
-        if ((w = rope(p, pos)) && ace(p, pos) && (h = wide(p, pos))) {
+        size at = *pos, to;
+        if ((w = rope(p, pos)) && (to = *pos, ace(p, pos)) && (h = wide(p, pos))) {
+          // the wing to change is a name like any other, colored as
+          // scat would color it; a lone $ stays the arm limb took it for
+          if (to != at + 1 || p->buf[at] != '$') {
+            note(p, at, to, larkonly(p, at, to) ? tok_operator : tok_variable);
+          }
           *push(&xs, p->a) = C2(w, h);
           continue;
         }
@@ -6653,7 +6660,6 @@ noun longx(parser *p, size *pos, b32 tol) {
         // $ with changes is the arm of a gate or trap, called again;
         // any other name may be a leg as well as an arm, and is left
         if (p->buf[from] == '$' && s == from + 1) note(p, from, s, tok_function);
-        notefun(p, s + 1);
       }
     }
   }
